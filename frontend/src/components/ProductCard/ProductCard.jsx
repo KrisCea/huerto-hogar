@@ -3,12 +3,12 @@ import React from 'react';
 import { Card, Button, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { addToCart } from '../../data/mockData';
+import { addToCart } from '../../utils/cartStorage';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
-  const handleAddToCart = () => {
-    addToCart(product.id, 1);
+  const handleAddToCart = async () => {
+    await addToCart(product.id, 1);
     window.dispatchEvent(new Event('cartUpdated'));
     
     // Notificación Toast personalizada

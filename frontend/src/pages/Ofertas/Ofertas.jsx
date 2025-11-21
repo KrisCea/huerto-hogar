@@ -2,13 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import ProductCard from '../../components/ProductCard/ProductCard';
-import { getOffertProducts } from '../../data/mockData';
+import { getProducts } from '../../services/apiService';
 
 const Ofertas = () => {
   const [offers, setOffers] = useState([]);
 
   useEffect(() => {
-    setOffers(getOffertProducts());
+    const loadOffers = async () => {
+      try {
+        const products = await getProducts();
+        const ofert = products.filter(p => p.precioOferta && p.precioOferta < p.price).map(p => ({
+          id: p.id,
+          nombre: p.name,
+          descripcion: p.description,
+          precio: p.price,
+          precioOferta: p.precioOferta,
+          imagen: p.imageUrl || '/images/products/default.jpg',
+          categoria: p.category ? p.category.name : '',
+          stock: p.stock || 0,
+          enOferta: !!p.precioOferta,
+          destacado: p.destacado || false,
+          unidad: p.unidad || 'kg'
+        }));
+        setOffers(ofert);
+      } catch (err) {
+        console.error('Error loading offers:', err);
+        setOffers([]);
+      }
+    };
+    loadOffers();
   }, []);
 
   return (

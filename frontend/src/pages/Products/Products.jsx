@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form } from 'react-bootstrap';
 import ProductCard from '../../components/ProductCard/ProductCard';
-import { getProducts, getCategories } from '../../data/mockData';
+import { getProducts, getCategories } from '../../services/apiService';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -13,8 +13,31 @@ const Products = () => {
   const [sortBy, setSortBy] = useState('nombre');
 
   useEffect(() => {
-    setProducts(getProducts());
-    setCategories(getCategories());
+    const load = async () => {
+      try {
+        const [apiProducts, apiCategories] = await Promise.all([getProducts(), getCategories()]);
+        const mapped = apiProducts.map(p => ({
+          id: p.id,
+          nombre: p.name,
+          descripcion: p.description,
+          precio: p.price,
+          imagen: p.imageUrl || '/images/products/default.jpg',
+          categoria: p.category ? p.category.slug || p.category.name.toLowerCase() : '',
+          stock: p.stock || 0,
+          enOferta: !!p.precioOferta,
+          precioOferta: p.precioOferta || null,
+          destacado: p.destacado || false,
+          unidad: p.unidad || 'kg'
+        }));
+        setProducts(mapped);
+        setCategories(apiCategories.map(c => ({ ...c })));
+      } catch (err) {
+        console.error('Error loading products or categories:', err);
+        setProducts([]);
+        setCategories([]);
+      }
+    };
+    load();
   }, []);
 
   useEffect(() => {

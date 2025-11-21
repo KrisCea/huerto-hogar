@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Form, InputGroup } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { getProducts, deleteProduct } from '../../data/mockData';
+import { getProducts, deleteProduct } from '../../services/apiService';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -17,7 +17,7 @@ const ProductsList = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = products.filter(p => 
+      const filtered = products.filter(p =>
         p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.categoria.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -27,14 +27,34 @@ const ProductsList = () => {
     }
   }, [searchTerm, products]);
 
-  const loadProducts = () => {
-    setProducts(getProducts());
+  const loadProducts = async () => {
+    try {
+      const apiProducts = await getProducts();
+      // Map API product shape to UI-friendly shape used in this component
+      const mapped = apiProducts.map(p => ({
+        id: p.id,
+        nombre: p.name,
+        descripcion: p.description,
+        precio: p.price,
+        imagen: p.imageUrl || '/images/products/default.jpg',
+        categoria: p.category ? p.category.name : '',
+        stock: p.stock || 0,
+        enOferta: p.precioOferta ? true : false,
+        precioOferta: p.precioOferta || null,
+        destacado: p.destacado || false
+      }));
+      setProducts(mapped);
+    } catch (err) {
+      console.error('Error loading products:', err);
+      setProducts([]);
+    }
   };
 
-  const handleDelete = (id, nombre) => {
-    if (window.confirm(`¿Estás seguro de eliminar "${nombre}"?`)) {
-      deleteProduct(id);
-      loadProducts();
+  const handleDelete = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar "${nombre}"?`)) return;
+    try {
+      await deleteProduct(id);
+      await loadProducts();
       toast.success(
         <div>
           <strong>Producto eliminado</strong>
@@ -42,6 +62,9 @@ const ProductsList = () => {
         </div>,
         { icon: "🗑️" }
       );
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      toast.error('No se pudo eliminar el producto: ' + (err.message || ''));
     }
   };
 

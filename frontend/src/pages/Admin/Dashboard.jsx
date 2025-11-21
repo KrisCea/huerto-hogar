@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { getProducts, getOrders } from '../../data/mockData';
+import { getProducts } from '../../services/apiService';
 import './Admin.css';
 
 const Dashboard = () => {
@@ -14,18 +14,22 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    const products = getProducts();
-    const orders = getOrders();
-    
-    const lowStockProducts = products.filter(p => p.stock < 10).length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-
-    setStats({
-      totalProducts: products.length,
-      totalOrders: orders.length,
-      totalRevenue: totalRevenue,
-      lowStock: lowStockProducts
-    });
+    const loadStats = async () => {
+      try {
+        const products = await getProducts();
+        const lowStockProducts = products.filter(p => (p.stock || 0) < 10).length;
+        // Orders are not yet on backend; keep totalOrders/totalRevenue as 0
+        setStats({
+          totalProducts: products.length,
+          totalOrders: 0,
+          totalRevenue: 0,
+          lowStock: lowStockProducts
+        });
+      } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+      }
+    };
+    loadStats();
   }, []);
 
   return (

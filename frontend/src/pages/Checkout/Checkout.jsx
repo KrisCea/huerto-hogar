@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button, Table, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { getCart, getCartTotal, createOrder, clearCart } from '../../data/mockData';
+import { getCart, getCartTotal, clearCart } from '../../utils/cartStorage';
+import { createOrder } from '../../services/apiService';
+import { getProductById } from '../../services/apiService';
 
 const Checkout = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -21,6 +23,10 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    loadCheckout();
+  }, [navigate]);
+
+  const loadCheckout = async () => {
     const cart = getCart();
     const totalAmount = getCartTotal();
     
@@ -29,9 +35,30 @@ const Checkout = () => {
       return;
     }
     
-    setCartItems(cart);
+    // Enriquecer cada item con datos del backend si están disponibles
+    const enrichedCart = await Promise.all(
+      cart.map(async (item) => {
+        try {
+          const apiProduct = await getProductById(item.productId);
+          if (apiProduct) {
+            return {
+              ...item,
+              nombre: apiProduct.name || item.nombre,
+              precio: apiProduct.price !== undefined ? apiProduct.price : item.precio,
+              imagen: apiProduct.imageUrl || item.imagen,
+              unidad: item.unidad || 'kg'
+            };
+          }
+        } catch (err) {
+          console.warn(`No se pudo enriquecer producto ${item.productId}:`, err);
+        }
+        return item;
+      })
+    );
+    
+    setCartItems(enrichedCart);
     setTotal(totalAmount);
-  }, [navigate]);
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -63,7 +90,7 @@ const Checkout = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const validationErrors = validateForm();
@@ -76,14 +103,20 @@ const Checkout = () => {
     const paymentSuccess = Math.random() > 0.3;
 
     if (paymentSuccess) {
-      const order = createOrder({
-        ...formData,
-        items: cartItems,
-        total: total
-      });
-      clearCart();
-      window.dispatchEvent(new Event('cartUpdated'));
-      navigate('/pago-exitoso', { state: { order } });
+      try {
+        const order = await createOrder({
+          ...formData,
+          items: cartItems,
+          total: total
+        });
+        // clear cart after successful order
+        clearCart();
+        window.dispatchEvent(new Event('cartUpdated'));
+        navigate('/pago-exitoso', { state: { order } });
+      } catch (err) {
+        console.error('Error creating order via API:', err);
+        navigate('/pago-error', { state: { formData, cartItems, total, error: String(err) } });
+      }
     } else {
       navigate('/pago-error', { state: { formData, cartItems, total } });
     }

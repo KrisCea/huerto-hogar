@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Navbar, Nav, Container, Badge, Button } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import { getCart, getCartTotal } from '../../data/mockData';
+import { getCart, getCartTotal } from '../../utils/cartStorage';
 import './Navbar.css';
 
 const NavbarComponent = () => {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Row, Col, Card } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProductById, createProduct, updateProduct } from '../../data/mockData';
+import { getProductById, createProduct, updateProduct, getCategories } from '../../services/apiService';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -16,7 +16,7 @@ const ProductForm = () => {
     descripcion: '',
     precio: '',
     stock: '',
-    categoria: 'frutas',
+    categoriaId: '',
     imagen: '/images/products/manzanas.jpg',
     enOferta: false,
     precioOferta: '',
@@ -25,21 +25,39 @@ const ProductForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    if (isEditMode) {
-      const product = getProductById(id);
-      if (product) {
-        setFormData({
-          ...product,
-          precio: product.precio.toString(),
-          stock: product.stock.toString(),
-          precioOferta: product.precioOferta ? product.precioOferta.toString() : ''
-        });
-      } else {
-        navigate('/admin/productos');
+    const load = async () => {
+      try {
+        const cats = await getCategories();
+        // categories state will be set below
+        setCategories(cats);
+
+        if (isEditMode) {
+          const product = await getProductById(id);
+          if (product) {
+            setFormData({
+              nombre: product.name || '',
+              descripcion: product.description || '',
+              precio: product.price ? product.price.toString() : '',
+              stock: product.stock ? product.stock.toString() : '',
+              categoriaId: product.category ? product.category.id : (cats[0] ? cats[0].id : ''),
+              imagen: product.imageUrl || '/images/products/manzanas.jpg',
+              enOferta: product.enOferta || false,
+              precioOferta: product.precioOferta ? product.precioOferta.toString() : '',
+              destacado: product.destacado || false,
+              unidad: product.unidad || 'kg'
+            });
+          } else {
+            navigate('/admin/productos');
+          }
+        }
+      } catch (err) {
+        console.error('Error loading categories or product:', err);
       }
-    }
+    };
+    load();
   }, [id, isEditMode, navigate]);
 
   const handleChange = (e) => {
@@ -65,7 +83,7 @@ const ProductForm = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationErrors = validateForm();
@@ -77,33 +95,44 @@ const ProductForm = () => {
       return;
     }
 
+    // Map local form fields to API payload
     const productData = {
-      ...formData,
-      precio: parseFloat(formData.precio),
-      stock: parseInt(formData.stock),
-      precioOferta: formData.enOferta ? parseFloat(formData.precioOferta) : null
+      name: formData.nombre,
+      description: formData.descripcion,
+      price: parseFloat(formData.precio),
+      imageUrl: formData.imagen,
+      categoryId: parseInt(formData.categoriaId),
+      stock: formData.stock ? parseInt(formData.stock) : 0,
+      precioOferta: formData.enOferta ? parseFloat(formData.precioOferta) : null,
+      destacado: formData.destacado,
+      unidad: formData.unidad
     };
 
-    if (isEditMode) {
-      updateProduct(id, productData);
-      toast.success(
-        <div>
-          <strong>Producto actualizado</strong>
-          <div className="small mt-1">{formData.nombre}</div>
-        </div>,
-        { icon: "✅" }
-      );
-      setTimeout(() => navigate('/admin/productos'), 1500);
-    } else {
-      createProduct(productData);
-      toast.success(
-        <div>
-          <strong>Producto creado exitosamente</strong>
-          <div className="small mt-1">{formData.nombre}</div>
-        </div>,
-        { icon: "✨" }
-      );
-      setTimeout(() => navigate('/admin/productos'), 1500);
+    try {
+      if (isEditMode) {
+        await updateProduct(id, productData);
+        toast.success(
+          <div>
+            <strong>Producto actualizado</strong>
+            <div className="small mt-1">{formData.nombre}</div>
+          </div>,
+          { icon: "✅" }
+        );
+        setTimeout(() => navigate('/admin/productos'), 1500);
+      } else {
+        await createProduct(productData);
+        toast.success(
+          <div>
+            <strong>Producto creado exitosamente</strong>
+            <div className="small mt-1">{formData.nombre}</div>
+          </div>,
+          { icon: "✨" }
+        );
+        setTimeout(() => navigate('/admin/productos'), 1500);
+      }
+    } catch (err) {
+      console.error('Error saving product:', err);
+      toast.error('Error al guardar el producto: ' + (err.message || ''), { icon: '❌' });
     }
   };
 
@@ -137,11 +166,13 @@ const ProductForm = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Categoría *</Form.Label>
-                  <Form.Select name="categoria" value={formData.categoria} onChange={handleChange}>
-                    <option value="frutas">Frutas</option>
-                    <option value="verduras">Verduras</option>
-                    <option value="lacteos">Lácteos</option>
-                    <option value="procesados">Procesados</option>
+                  <Form.Select name="categoriaId" value={formData.categoriaId} onChange={handleChange} required>
+                    <option value="">Seleccionar categoría...</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>

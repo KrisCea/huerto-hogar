@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Image } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getCart, updateCartItem, removeFromCart, clearCart, getCartTotal } from '../../data/mockData';
+import { getCart, updateCartItem, removeFromCart, clearCart, getCartTotal } from '../../utils/cartStorage';
+import { getProductById } from '../../services/apiService';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -14,10 +15,32 @@ const Cart = () => {
     loadCart();
   }, []);
 
-  const loadCart = () => {
+  const loadCart = async () => {
     const cart = getCart();
     const totalAmount = getCartTotal();
-    setCartItems(cart);
+    
+    // Enriquecer cada item del carrito con datos del backend si están disponibles
+    const enrichedCart = await Promise.all(
+      cart.map(async (item) => {
+        try {
+          const apiProduct = await getProductById(item.productId);
+          if (apiProduct) {
+            return {
+              ...item,
+              nombre: apiProduct.name || item.nombre,
+              precio: apiProduct.price !== undefined ? apiProduct.price : item.precio,
+              imagen: apiProduct.imageUrl || item.imagen,
+              unidad: item.unidad || 'kg'
+            };
+          }
+        } catch (err) {
+          console.warn(`No se pudo enriquecer producto ${item.productId}:`, err);
+        }
+        return item;
+      })
+    );
+    
+    setCartItems(enrichedCart);
     setTotal(totalAmount);
   };
 

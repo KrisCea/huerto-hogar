@@ -2,13 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { getCategories } from '../../data/mockData';
+import { getCategories } from '../../services/apiService';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    setCategories(getCategories());
+    const load = async () => {
+      try {
+        const cats = await getCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error('Error loading categories:', err);
+        setCategories([]);
+      }
+    };
+    load();
   }, []);
 
   return (

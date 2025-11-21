@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import ProductCard from '../../components/ProductCard/ProductCard';
-import { getFeaturedProducts, getCategories } from '../../data/mockData';
+import { getProducts, getCategories } from '../../services/apiService';
 import './Home.css';
 
 const Home = () => {
@@ -11,8 +11,33 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    setFeaturedProducts(getFeaturedProducts());
-    setCategories(getCategories());
+    const load = async () => {
+      try {
+        const [allProducts, cats] = await Promise.all([getProducts(), getCategories()]);
+        setCategories(cats);
+        const featured = allProducts
+          .filter(p => p.destacado)
+          .map(p => ({
+            id: p.id,
+            nombre: p.name,
+            descripcion: p.description,
+            precio: p.price,
+            imagen: p.imageUrl || '/images/products/default.jpg',
+            categoria: p.category ? p.category.name : '',
+            stock: p.stock || 0,
+            enOferta: !!p.precioOferta,
+            precioOferta: p.precioOferta || null,
+            destacado: p.destacado || false,
+            unidad: p.unidad || 'kg'
+          }));
+        setFeaturedProducts(featured);
+      } catch (err) {
+        console.error('Error loading home data:', err);
+        setFeaturedProducts([]);
+        setCategories([]);
+      }
+    };
+    load();
   }, []);
 
   return (

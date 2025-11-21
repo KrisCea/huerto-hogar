@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Image, Button, Badge } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getProductById, addToCart } from '../../data/mockData';
+import { getProductById } from '../../services/apiService';
+import { addToCart } from '../../utils/cartStorage'; // cart storage
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -12,17 +13,40 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    const foundProduct = getProductById(id);
-    if (!foundProduct) {
-      toast.error('Producto no encontrado');
-      navigate('/productos');
-      return;
-    }
-    setProduct(foundProduct);
+    const load = async () => {
+      try {
+        const p = await getProductById(id);
+        if (!p) {
+          toast.error('Producto no encontrado');
+          navigate('/productos');
+          return;
+        }
+        // Map API product to UI shape expected below
+        const mapped = {
+          id: p.id,
+          nombre: p.name,
+          descripcion: p.description,
+          precio: p.price,
+          imagen: p.imageUrl || '/images/products/default.jpg',
+          categoria: p.category ? p.category.name : '',
+          stock: p.stock || 0,
+          enOferta: !!p.precioOferta,
+          precioOferta: p.precioOferta || null,
+          destacado: p.destacado || false,
+          unidad: p.unidad || 'kg'
+        };
+        setProduct(mapped);
+      } catch (err) {
+        console.error('Error loading product:', err);
+        toast.error('Error al cargar el producto');
+        navigate('/productos');
+      }
+    };
+    load();
   }, [id, navigate]);
 
-  const handleAddToCart = () => {
-    addToCart(product.id, quantity);
+  const handleAddToCart = async () => {
+    await addToCart(product.id, quantity);
     window.dispatchEvent(new Event('cartUpdated'));
     
     toast.success(
