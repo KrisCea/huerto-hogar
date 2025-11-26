@@ -1,112 +1,245 @@
-# Monorepo - HuertoHogar (Frontend + Backend)
+# 🏡 HuertoHogar - E-commerce de Productos Orgánicos
 
-Este es un monorepo que contiene tanto el frontend (React) como el backend (Spring Boot) del proyecto HuertoHogar.
+Sistema completo de e-commerce con backend Spring Boot y frontend React, incluyendo autenticación JWT, control de roles y API REST documentada.
 
-## 📁 Estructura del Proyecto
+---
 
-```
-huerto-hogar/
-├── backend/                  # Spring Boot REST API (Java 21)
-│   ├── src/
-│   ├── pom.xml
-│   ├── Dockerfile
-│   └── mvnw
-├── frontend/                 # React Application
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   ├── Dockerfile
-│   └── karma.conf.js
-├── docker-compose.yml        # Orquestación de servicios
-├── .gitignore
-└── README.md
-```
+## 🚀 Inicio Rápido
 
-## 🚀 Cómo Ejecutar
+### Prerrequisitos
 
-### Opción 1: Usando Docker Compose (Recomendado)
+- **Java 21** o superior
+- **Node.js 16+** y npm
+- **Maven** (incluido con `mvnw`)
 
-Requiere tener Docker y Docker Compose instalados.
+### 1. Iniciar Backend
 
-```bash
-# Construir y ejecutar ambos servicios
-docker-compose up --build
-
-# El frontend estará en: http://localhost:3000
-# El backend estará en: http://localhost:8080
-```
-
-### Opción 2: Ejecutar Localmente (sin Docker)
-
-#### Backend (Spring Boot)
 ```bash
 cd backend
+./mvnw clean install
 ./mvnw spring-boot:run
-# Backend disponible en: http://localhost:8080
 ```
 
-#### Frontend (React)
+El backend estará disponible en: **http://localhost:8080**
+
+### 2. Iniciar Frontend
+
 ```bash
 cd frontend
 npm install
 npm start
-# Frontend disponible en: http://localhost:3000
 ```
 
-## 📋 Requisitos
-
-### Para Docker Compose:
-- Docker (versión 20.10+)
-- Docker Compose (versión 1.29+)
-
-### Para desarrollo local:
-- **Backend**: Java 21, Maven 3.6+
-- **Frontend**: Node.js 18+, npm 9+
-
-## 🧪 Testing
-
-### Frontend - Tests con Karma y Jasmine
-
-```bash
-cd frontend
-npm install
-npx karma start --single-run
-```
-
-### Backend - Tests con Maven
-
-```bash
-cd backend
-./mvnw test
-```
-
-## 🔧 Configuración
-
-### Frontend
-- Variables de entorno: `frontend/.env`
-- Puerto por defecto: `3000`
-- API URL (desarrollo): `http://localhost:8080/api`
-
-### Backend
-- Configuración: `backend/src/main/resources/application.properties`
-- Puerto por defecto: `8080`
-- Base de datos: H2 (en memoria para desarrollo)
-
-## 📝 Notas Importantes
-
-- El frontend se conecta al backend a través de la URL configurada en `REACT_APP_API_URL`
-- Ambos servicios están en la misma red Docker (`huerto-network`) para comunicación
-- Los cambios en el código requieren reconstruir la imagen Docker o reiniciar los servicios
-
-## 📚 Documentación Adicional
-
-- [Backend - README](./backend/HELP.md)
-- [Frontend - README](./frontend/README.md)
-
-## 🤝 Contribución
-
-Ambos servicios siguen estándares de código y testing. Consulta la documentación de cada carpeta para más detalles.
+El frontend estará disponible en: **http://localhost:3000**
 
 ---
 
-**Proyecto**: HuertoHogar - Plataforma de E-commerce para productos orgánicos
+## 🧪 Testing
+
+### Probar API con cURL
+
+#### 1. Registrar usuario
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "test123",
+    "role": "CLIENTE"
+  }'
+```
+
+#### 2. Iniciar sesión
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@huertohogar.com",
+    "password": "admin123"
+  }'
+```
+
+**Respuesta:** Obtendrás un `token` JWT. Guárdalo para las siguientes peticiones.
+
+#### 3. Listar productos (público)
+```bash
+curl http://localhost:8080/api/v1/products
+```
+
+#### 4. Crear orden (requiere autenticación)
+```bash
+curl -X POST http://localhost:8080/api/v1/orders \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TU_TOKEN_AQUI" \
+  -d '{
+    "nombre": "Juan",
+    "apellidos": "Pérez",
+    "correo": "juan@example.com",
+    "calle": "Calle Principal 123",
+    "region": "Región Metropolitana",
+    "comuna": "Santiago",
+    "total": 150.50
+  }'
+```
+
+### Probar desde el navegador
+
+1. **Swagger UI** (Documentación interactiva):
+   - URL: http://localhost:8080/swagger-ui.html
+   - Permite probar todos los endpoints directamente
+
+2. **Frontend React**:
+   - URL: http://localhost:3000
+   - Navega por la aplicación y prueba las funcionalidades
+
+---
+
+## 👥 Usuarios de Prueba
+
+El sistema incluye usuarios pre-configurados:
+
+| Rol | Email | Password | Acceso |
+|-----|-------|----------|--------|
+| **Administrador** | `admin@huertohogar.com` | `admin123` | Acceso total al sistema |
+| **Vendedor** | `vendedor@huertohogar.com` | `vendedor123` | Ver productos y órdenes |
+| **Cliente** | `cliente@huertohogar.com` | `cliente123` | Solo tienda (público) |
+
+---
+
+## 📍 Endpoints Principales
+
+### Públicos (sin autenticación)
+- `GET /api/v1/products` - Listar productos
+- `GET /api/v1/products/{id}` - Ver producto
+- `GET /api/v1/categories` - Listar categorías
+- `POST /api/v1/auth/register` - Registrar usuario
+- `POST /api/v1/auth/login` - Iniciar sesión
+
+### Autenticados
+- `POST /api/v1/orders` - Crear orden (cualquier usuario autenticado)
+
+### Vendedor (ADMIN o VENDEDOR)
+- `GET /api/v1/vendedor/products` - Ver productos
+- `GET /api/v1/vendedor/orders` - Ver órdenes
+
+### Administrador (solo ADMIN)
+- `GET /api/v1/admin/products` - CRUD completo de productos
+- `GET /api/v1/admin/orders` - Ver todas las órdenes
+
+---
+
+## 🔧 Configuración
+
+### Base de Datos
+
+Por defecto usa **H2** (in-memory) para desarrollo. Para cambiar a **MySQL**:
+
+1. Edita `backend/src/main/resources/application.properties`
+2. Descomenta la configuración MySQL
+3. Comenta la configuración H2
+4. Ajusta credenciales según tu base de datos
+
+### Variables de Entorno Frontend
+
+El frontend usa `http://localhost:8080/api/v1` por defecto. Para cambiar:
+
+1. Crea `.env` en `frontend/`
+2. Agrega: `REACT_APP_API_URL=http://tu-backend:8080/api/v1`
+
+---
+
+## 📚 Documentación
+
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
+- **Documentación Backend**: Ver `BACKEND_REST_RESUMEN.md`
+- **Guía de Integración**: Ver `INTEGRACION_FRONTEND_BACKEND.md`
+- **Índice Completo**: Ver `DOCUMENTACION_INDICE.md`
+
+---
+
+## 🐛 Solución de Problemas
+
+### Backend no inicia
+```bash
+# Verificar Java
+java -version  # Debe ser 21+
+
+# Limpiar y recompilar
+cd backend
+./mvnw clean install
+```
+
+### Frontend no inicia
+```bash
+# Limpiar node_modules
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Error CORS
+- Verifica que el backend esté en `http://localhost:8080`
+- Verifica que el frontend esté en `http://localhost:3000`
+- Revisa `SecurityConfig.java` si necesitas cambiar orígenes
+
+### Error de autenticación
+- Verifica que el token JWT esté en el header: `Authorization: Bearer <token>`
+- Verifica que el token no haya expirado (24 horas por defecto)
+
+---
+
+## 🏗️ Estructura del Proyecto
+
+```
+huerto-hogar-1/
+├── backend/              # Spring Boot API
+│   ├── src/main/java/   # Código fuente
+│   └── pom.xml          # Dependencias Maven
+├── frontend/            # React App
+│   ├── src/            # Código fuente
+│   └── package.json    # Dependencias npm
+└── README.md           # Este archivo
+```
+
+---
+
+## ✅ Verificación Rápida
+
+```bash
+# 1. Verificar backend
+curl http://localhost:8080/api/v1/products
+
+# 2. Verificar frontend
+curl http://localhost:3000
+
+# 3. Verificar Swagger
+# Abre: http://localhost:8080/swagger-ui.html
+```
+
+---
+
+## 🎯 Características Implementadas
+
+- ✅ API REST con versionado (`/api/v1/...`)
+- ✅ Autenticación JWT
+- ✅ Control de roles (ADMIN, VENDEDOR, CLIENTE)
+- ✅ Swagger/OpenAPI documentación
+- ✅ CRUD completo de productos y categorías
+- ✅ Gestión de órdenes
+- ✅ CORS configurado
+- ✅ Validación de datos
+- ✅ Manejo de errores centralizado
+
+---
+
+## 📞 Soporte
+
+Para más información, consulta:
+- `BACKEND_REST_RESUMEN.md` - Resumen del backend
+- `INTEGRACION_FRONTEND_BACKEND.md` - Guía de integración
+- Swagger UI - Documentación interactiva
+
+---
+
+**¡Listo para usar!** 🚀

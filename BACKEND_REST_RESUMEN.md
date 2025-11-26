@@ -28,9 +28,9 @@
 - ✅ Base de datos en memoria (desarrollo)
 
 ### 4. **Documentación**
-- ✅ `REST_API.md` - Documentación completa de API
 - ✅ `INTEGRACION_FRONTEND_BACKEND.md` - Guía de integración
 - ✅ `frontend/.env.development` - Variables de entorno
+- ✅ Swagger UI disponible en `/swagger-ui.html`
 
 ### 5. **Servicios Frontend**
 - ✅ `apiService.js` - Servicio de llamadas HTTP
@@ -64,11 +64,22 @@ npm start          # Inicia en http://localhost:3000
 
 ## 📊 Endpoints Disponibles
 
+### Públicos (sin autenticación)
 | Endpoint | Método | Descripción |
 |----------|--------|-------------|
-| `/api/products` | GET | Lista todos los productos |
-| `/api/products/{id}` | GET | Obtiene un producto por ID |
-| `/api/categories` | GET | Lista todas las categorías |
+| `/api/v1/products` | GET | Lista todos los productos |
+| `/api/v1/products/{id}` | GET | Obtiene un producto por ID |
+| `/api/v1/categories` | GET | Lista todas las categorías |
+| `/api/v1/auth/register` | POST | Registrar nuevo usuario |
+| `/api/v1/auth/login` | POST | Iniciar sesión |
+
+### Autenticados
+| Endpoint | Método | Descripción | Roles |
+|----------|--------|-------------|-------|
+| `/api/v1/orders` | POST | Crear orden | Todos autenticados |
+| `/api/v1/vendedor/products` | GET | Ver productos | ADMIN, VENDEDOR |
+| `/api/v1/vendedor/orders` | GET | Ver órdenes | ADMIN, VENDEDOR |
+| `/api/v1/admin/products` | GET/POST/PUT/DELETE | CRUD productos | ADMIN |
 
 ---
 
@@ -116,22 +127,14 @@ fetch('http://localhost:8080/api/products')
 
 ---
 
-## 🔒 Seguridad (CORS)
+## 🔒 Seguridad (CORS y JWT)
 
-✅ Configurado en `WebConfig.java`
+✅ Configurado en `SecurityConfig.java`
 
-Permite:
-- Origen: `http://localhost:3000`
-- Métodos: GET, POST, PUT, DELETE, OPTIONS
-- Headers: Todos
-
-Para cambiar, editar:
-```java
-registry.addMapping("/api/**")
-    .allowedOrigins("http://localhost:3000")
-    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-    .allowCredentials(true);
-```
+- CORS habilitado para `http://localhost:3000`
+- Autenticación JWT implementada
+- Control de roles: ADMIN, VENDEDOR, CLIENTE
+- Endpoints protegidos según roles
 
 ---
 
@@ -162,9 +165,9 @@ registry.addMapping("/api/**")
 ## 📚 Archivos Clave
 
 ### Backend
-- `backend/REST_API.md` - Documentación detallada
 - `backend/pom.xml` - Dependencias Maven
 - `backend/src/main/resources/application.properties` - Configuración
+- Swagger UI: `http://localhost:8080/swagger-ui.html` - Documentación interactiva
 
 ### Frontend
 - `frontend/src/services/apiService.js` - Servicio de API
@@ -176,16 +179,15 @@ registry.addMapping("/api/**")
 
 ---
 
-## 🎯 Próximas Características (Opcionales)
+## ✅ Características Implementadas
 
-- [ ] Autenticación JWT
-- [ ] Endpoints POST/PUT/DELETE para admin
-- [ ] Carrito de compras
-- [ ] Órdenes
-- [ ] Paginación
-- [ ] Filtros y búsqueda
-- [ ] Validación de datos
-- [ ] Persistencia en BD real (MySQL/PostgreSQL)
+- ✅ Autenticación JWT
+- ✅ Endpoints CRUD completos
+- ✅ Control de roles (ADMIN, VENDEDOR, CLIENTE)
+- ✅ Swagger/OpenAPI documentación
+- ✅ Capa de servicios
+- ✅ Validación de datos
+- ✅ Base de datos configurada (H2/MySQL)
 
 ---
 

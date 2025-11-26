@@ -1,11 +1,10 @@
 package com.huertohogar.huerto_hogar_web.controller;
 
 import com.huertohogar.huerto_hogar_web.dto.CreateProductDTO;
-import com.huertohogar.huerto_hogar_web.exception.ResourceNotFoundException;
-import com.huertohogar.huerto_hogar_web.model.Category;
 import com.huertohogar.huerto_hogar_web.model.Product;
-import com.huertohogar.huerto_hogar_web.repository.CategoryRepository;
-import com.huertohogar.huerto_hogar_web.repository.ProductRepository;
+import com.huertohogar.huerto_hogar_web.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,84 +13,45 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/api/v1/products")
+@Tag(name = "Productos", description = "API para gestión de productos")
 public class ProductController {
 
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final ProductService productService;
 
-    public ProductController(ProductRepository productRepository, CategoryRepository categoryRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
-    /**
-     * GET /api/products - Obtener todos los productos
-     */
     @GetMapping
+    @Operation(summary = "Listar todos los productos")
     public List<Product> list() {
-        return productRepository.findAll();
+        return productService.findAll();
     }
 
-    /**
-     * GET /api/products/{id} - Obtener producto por ID
-     */
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener producto por ID")
     public ResponseEntity<Product> getById(@PathVariable Long id) {
-        return productRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto con ID " + id + " no encontrado"));
+        return ResponseEntity.ok(productService.findById(id));
     }
 
-    /**
-     * POST /api/products - Crear nuevo producto
-     */
     @PostMapping
+    @Operation(summary = "Crear nuevo producto")
     public ResponseEntity<Product> create(@Valid @RequestBody CreateProductDTO dto) {
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoría con ID " + dto.getCategoryId() + " no encontrada"));
-
-        Product product = new Product();
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setImageUrl(dto.getImageUrl());
-        product.setCategory(category);
-
-        Product saved = productRepository.save(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        Product created = productService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    /**
-     * PUT /api/products/{id} - Actualizar producto
-     */
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar producto")
     public ResponseEntity<Product> update(@PathVariable Long id, @Valid @RequestBody CreateProductDTO dto) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto con ID " + id + " no encontrado"));
-
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoría con ID " + dto.getCategoryId() + " no encontrada"));
-
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setImageUrl(dto.getImageUrl());
-        product.setCategory(category);
-
-        Product updated = productRepository.save(product);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(productService.update(id, dto));
     }
 
-    /**
-     * DELETE /api/products/{id} - Eliminar producto
-     */
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar producto")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto con ID " + id + " no encontrado"));
-
-        productRepository.delete(product);
+        productService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

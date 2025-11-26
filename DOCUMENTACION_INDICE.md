@@ -14,10 +14,10 @@
    - Ejemplos de consumo desde React
    - Solución de problemas
 
-3. **[backend/REST_API.md](./backend/REST_API.md)** ← **TERCERO**
-   - Documentación técnica completa
-   - Ejemplos con cURL
-   - Estructura de datos
+3. **Swagger UI** ← **TERCERO**
+   - Accede a `http://localhost:8080/swagger-ui.html`
+   - Documentación interactiva de la API
+   - Prueba endpoints directamente
 
 ---
 
@@ -27,8 +27,7 @@
 
 | Archivo | Contenido |
 |---------|-----------|
-| **[backend/REST_API.md](./backend/REST_API.md)** | API REST completa: endpoints, ejemplos, datos de prueba |
-| **[backend/EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md)** | Funcionalidades opcionales: JWT, validación, paginación, búsqueda, CRUD |
+| **Swagger UI** | Documentación interactiva de la API en `http://localhost:8080/swagger-ui.html` |
 
 ### Frontend
 
@@ -56,7 +55,7 @@ huerto-hogar/
 │   │   ├── HuertoHogarWebApplication.java      (Aplicación principal)
 │   │   ├── DataLoader.java                     (Datos de prueba)
 │   │   ├── config/
-│   │   │   └── WebConfig.java                  (CORS)
+│   │   │   └── SecurityConfig.java             (CORS y Seguridad)
 │   │   ├── controller/
 │   │   │   ├── ProductController.java
 │   │   │   └── CategoryController.java
@@ -69,8 +68,7 @@ huerto-hogar/
 │   ├── src/main/resources/
 │   │   └── application.properties               (Configuración)
 │   ├── pom.xml                                 (Dependencias)
-│   ├── REST_API.md                             📖 Documentación API
-│   └── EXTENSIONES_AVANZADAS.md                📖 Funcionalidades avanzadas
+│   └── Swagger UI                               📖 Documentación interactiva
 │
 ├── frontend/
 │   ├── src/
@@ -136,7 +134,7 @@ GET  /api/products/{id}    → Obtiene uno
 GET  /api/categories       → Lista todas
 ```
 
-### Autenticación (Opcional - Ver EXTENSIONES_AVANZADAS.md)
+### Autenticación
 ```
 POST /api/auth/register    → Registrarse
 POST /api/auth/login       → Iniciar sesión
@@ -180,7 +178,7 @@ axios.get('http://localhost:8080/api/products')
 ✅ Configurado para `http://localhost:3000`
 
 ### JWT (Opcional)
-- Ver [backend/EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md)
+- JWT implementado - Ver `SecurityConfig.java` y `AuthController.java`
 
 ---
 
@@ -224,16 +222,16 @@ server.port=9000
 ```
 
 **P: ¿Cómo cambio el origen CORS permitido?**
-A: Edita `backend/src/main/java/com/huertohogar/huerto_hogar_web/config/WebConfig.java`
+A: Edita `backend/src/main/java/com/huertohogar/huerto_hogar_web/config/SecurityConfig.java`
 
 **P: ¿Cómo agrego más datos de prueba?**
 A: Edita `backend/src/main/java/com/huertohogar/huerto_hogar_web/DataLoader.java`
 
 **P: ¿Cómo agrego autenticación?**
-A: Ver [backend/EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md) - Sección 1
+A: JWT ya está implementado. Ver `AuthController.java` y `SecurityConfig.java`
 
 **P: ¿Cómo hago búsqueda y filtros?**
-A: Ver [backend/EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md) - Sección 5
+A: Implementar en los servicios correspondientes
 
 ---
 
@@ -241,7 +239,7 @@ A: Ver [backend/EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md) - 
 
 | Problema | Solución |
 |----------|----------|
-| `CORS error` | Verifica que CORS está configurado en `WebConfig.java` |
+| `CORS error` | Verifica que CORS está configurado en `SecurityConfig.java` |
 | `Backend no responde` | Verifica: `curl http://localhost:8080/api/products` |
 | `Datos no se cargan` | Abre DevTools (F12) → Network → verifica requests |
 | `Puerto en uso` | Cambia puerto en `application.properties` |
@@ -254,7 +252,7 @@ A: Ver [backend/EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md) - 
 2. **Ejecuta** backend y frontend
 3. **Prueba** los endpoints
 4. **Integra** con tus componentes React
-5. **Extiende** con funcionalidades de [EXTENSIONES_AVANZADAS.md](./backend/EXTENSIONES_AVANZADAS.md)
+5. **Consulta** Swagger UI en `http://localhost:8080/swagger-ui.html` para ver todos los endpoints
 
 ---
 

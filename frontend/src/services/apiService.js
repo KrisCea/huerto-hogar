@@ -3,7 +3,7 @@
  * Maneja todas las peticiones HTTP al backend en http://localhost:8080/api
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
 // Base URL to serve static assets (images). Prefer explicit REACT_APP_API_IMAGE_URL
 // or derive from REACT_APP_API_URL by removing trailing `/api` segment.
 const IMAGE_BASE = (process.env.REACT_APP_API_IMAGE_URL
@@ -258,7 +258,10 @@ export const createOrder = async (order) => {
   try {
     const response = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(order),
     });
     return await handleResponse(response);
@@ -266,6 +269,103 @@ export const createOrder = async (order) => {
     console.error('Error creating order:', error);
     throw error;
   }
+};
+
+// ==================== AUTENTICACIÓN ====================
+
+/**
+ * Agregar token a las peticiones autenticadas
+ * @returns {Object} Headers con Authorization
+ */
+const getAuthHeaders = () => {
+  const token = getToken();
+  if (token) {
+    return { 'Authorization': `Bearer ${token}` };
+  }
+  return {};
+};
+
+/**
+ * Registrar nuevo usuario
+ * @param {Object} userData - Datos del usuario (name, email, password, role)
+ * @returns {Promise<Object>} Token y datos del usuario
+ */
+export const register = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    const data = await handleResponse(response);
+    // Guardar token en localStorage
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    return data;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw error;
+  }
+};
+
+/**
+ * Iniciar sesión
+ * @param {Object} credentials - Credenciales (email, password)
+ * @returns {Promise<Object>} Token y datos del usuario
+ */
+export const login = async (credentials) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    const data = await handleResponse(response);
+    // Guardar token en localStorage
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    return data;
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
+  }
+};
+
+/**
+ * Cerrar sesión
+ */
+export const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
+/**
+ * Obtener token del localStorage
+ * @returns {string|null} Token JWT
+ */
+export const getToken = () => {
+  return localStorage.getItem('token');
+};
+
+/**
+ * Obtener usuario actual del localStorage
+ * @returns {Object|null} Datos del usuario
+ */
+export const getCurrentUser = () => {
+  const userStr = localStorage.getItem('user');
+  return userStr ? JSON.parse(userStr) : null;
+};
+
+/**
+ * Verificar si el usuario está autenticado
+ * @returns {boolean}
+ */
+export const isAuthenticated = () => {
+  return !!getToken();
 };
 
 export default {
@@ -281,4 +381,13 @@ export default {
   createCategory,
   updateCategory,
   deleteCategory,
+  // Órdenes
+  createOrder,
+  // Autenticación
+  register,
+  login,
+  logout,
+  getToken,
+  getCurrentUser,
+  isAuthenticated,
 };

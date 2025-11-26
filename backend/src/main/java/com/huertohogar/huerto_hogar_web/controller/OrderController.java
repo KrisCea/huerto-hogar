@@ -2,61 +2,46 @@ package com.huertohogar.huerto_hogar_web.controller;
 
 import com.huertohogar.huerto_hogar_web.dto.CreateOrderDTO;
 import com.huertohogar.huerto_hogar_web.model.Order;
-import com.huertohogar.huerto_hogar_web.repository.OrderRepository;
+import com.huertohogar.huerto_hogar_web.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/v1/orders")
+@Tag(name = "Órdenes", description = "API para gestión de órdenes")
 public class OrderController {
 
-    private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
-    public OrderController(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
     }
 
     @PostMapping
+    @Operation(summary = "Crear nueva orden", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderDTO dto) {
-        Order order = new Order();
-        order.setNombre(dto.nombre);
-        order.setApellidos(dto.apellidos);
-        order.setCorreo(dto.correo);
-        order.setCalle(dto.calle);
-        order.setDepartamento(dto.departamento);
-        order.setRegion(dto.region);
-        order.setComuna(dto.comuna);
-        order.setIndicaciones(dto.indicaciones);
-        order.setTotal(dto.total != null ? dto.total : null);
-        order.setCodigo(dto.codigo != null ? dto.codigo : "ORD" + System.currentTimeMillis());
-        order.setEstado(dto.estado != null ? dto.estado : "confirmado");
-        order.setFecha(LocalDateTime.now());
-        try {
-            // store items as JSON string
-            if (dto.items != null) {
-                order.setItemsJson(dto.items.toString());
-            }
-        } catch (Exception e) {
-            order.setItemsJson(null);
-        }
-
-        Order saved = orderRepository.save(order);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+        Order created = orderService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
+    @Operation(summary = "Listar todas las órdenes", security = @SecurityRequirement(name = "bearerAuth"))
+    @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
     public List<Order> listOrders() {
-        return orderRepository.findAll();
+        return orderService.findAll();
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener orden por ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
     public ResponseEntity<Order> getOrder(@PathVariable Long id) {
-        return orderRepository.findById(id)
-                .map(o -> ResponseEntity.ok(o))
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(orderService.findById(id));
     }
 }

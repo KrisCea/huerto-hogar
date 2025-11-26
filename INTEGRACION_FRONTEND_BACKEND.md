@@ -36,9 +36,9 @@ Frontend estará disponible en: `http://localhost:3000`
 - `src/main/java/com/huertohogar/huerto_hogar_web/repository/CategoryRepository.java` - DAO de Categorías
 - `src/main/java/com/huertohogar/huerto_hogar_web/controller/ProductController.java` - API REST Productos
 - `src/main/java/com/huertohogar/huerto_hogar_web/controller/CategoryController.java` - API REST Categorías
-- `src/main/java/com/huertohogar/huerto_hogar_web/config/WebConfig.java` - Configuración CORS
+- `src/main/java/com/huertohogar/huerto_hogar_web/config/SecurityConfig.java` - Configuración CORS y seguridad
 - `src/main/java/com/huertohogar/huerto_hogar_web/DataLoader.java` - Datos de prueba
-- `REST_API.md` - Documentación completa de API
+- Swagger UI: `http://localhost:8080/swagger-ui.html` - Documentación interactiva
 
 ### Frontend (`frontend/`)
 - `src/services/apiService.js` - Servicio de API (fetch)
@@ -126,14 +126,10 @@ useEffect(() => {
 
 La configuración CORS permite peticiones desde `http://localhost:3000` a `http://localhost:8080/api/*`.
 
-Si necesitas cambiar los orígenes permitidos, edita `backend/src/main/java/com/huertohogar/huerto_hogar_web/config/WebConfig.java`:
+Si necesitas cambiar los orígenes permitidos, edita `backend/src/main/java/com/huertohogar/huerto_hogar_web/config/SecurityConfig.java`:
 
 ```java
-registry.addMapping("/api/**")
-    .allowedOrigins("http://localhost:3000", "http://tu-dominio.com")
-    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-    .allowedHeaders("*")
-    .allowCredentials(true);
+configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://tu-dominio.com"));
 ```
 
 ## 📊 Estructura de Datos
@@ -224,7 +220,7 @@ Spring Boot Backend
 **Solución**: Asegúrate de que:
 1. El backend está corriendo en `http://localhost:8080`
 2. El frontend hace requests a `http://localhost:8080/api/*`
-3. La configuración CORS en `WebConfig.java` permite `http://localhost:3000`
+3. La configuración CORS en `SecurityConfig.java` permite `http://localhost:3000`
 
 ### Error: Backend no accesible
 
@@ -247,7 +243,7 @@ Spring Boot Backend
 
 ## 📚 Referencias
 
-- [REST_API.md](./REST_API.md) - Documentación completa de API
+- Swagger UI: `http://localhost:8080/swagger-ui.html` - Documentación interactiva de la API
 - [Spring Boot Docs](https://spring.io/projects/spring-boot)
 - [Fetch API MDN](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 - [CORS MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
